@@ -2,6 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { extractRecipe } from "@/lib/parser";
 import { createClient } from "@/lib/supabase/server";
 
+function normalizeUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    parsed.hash = "";
+    // Remove trailing slash from pathname (except root)
+    if (parsed.pathname.length > 1 && parsed.pathname.endsWith("/")) {
+      parsed.pathname = parsed.pathname.slice(0, -1);
+    }
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
 async function saveToArchive(
   userId: string,
   recipe: {
@@ -21,7 +35,7 @@ async function saveToArchive(
       {
         user_id: userId,
         title: recipe.title,
-        source_url: recipe.sourceUrl,
+        source_url: normalizeUrl(recipe.sourceUrl),
         image: recipe.image,
         prep_time: recipe.prepTime,
         cook_time: recipe.cookTime,

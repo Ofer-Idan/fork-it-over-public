@@ -621,13 +621,78 @@ export default function Home() {
         </div>
       )}
 
-      {/* Empty State */}
+      {/* Empty State / Getting Started Guide */}
       {!recipe && !loading && !error && (
-        <div className="text-center py-16 text-secondary">
-          <div className="mb-4 text-accent flex justify-center">
-            <ForkIcon />
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-8">
+            <div className="mb-4 text-accent flex justify-center">
+              <ForkIcon />
+            </div>
+            <p className="text-lg text-secondary">Paste a recipe URL above to get started</p>
           </div>
-          <p className="text-lg">Paste a recipe URL above to get started</p>
+
+          <div className="bg-surface border border-default rounded-xl p-6 space-y-6">
+            <div>
+              <h2 className="text-lg font-semibold text-primary mb-2">What is Fork It Over?</h2>
+              <p className="text-secondary text-sm leading-relaxed">
+                Fork It Over strips away the ads, pop-ups, and life stories from recipe websites.
+                Paste any recipe URL and get a clean view with just the ingredients and instructions.
+                Send ingredients straight to your shopping list app.
+              </p>
+            </div>
+
+            <hr className="border-default" />
+
+            <div>
+              <h3 className="font-semibold text-primary mb-3">How it works</h3>
+              <ol className="space-y-3">
+                <li className="flex gap-3 text-sm">
+                  <span className="flex-shrink-0 w-6 h-6 bg-[var(--color-accent)] text-white rounded-full flex items-center justify-center text-xs font-semibold">1</span>
+                  <span className="text-secondary pt-0.5"><strong className="text-primary">Paste a URL</strong> from any recipe website and click "Fork This Recipe"</span>
+                </li>
+                <li className="flex gap-3 text-sm">
+                  <span className="flex-shrink-0 w-6 h-6 bg-[var(--color-accent)] text-white rounded-full flex items-center justify-center text-xs font-semibold">2</span>
+                  <span className="text-secondary pt-0.5"><strong className="text-primary">Review the recipe</strong> -- ingredients, instructions, and notes, all ad-free</span>
+                </li>
+                <li className="flex gap-3 text-sm">
+                  <span className="flex-shrink-0 w-6 h-6 bg-[var(--color-accent)] text-white rounded-full flex items-center justify-center text-xs font-semibold">3</span>
+                  <span className="text-secondary pt-0.5"><strong className="text-primary">Select ingredients</strong> and send them to Bring! or Todoist with one click</span>
+                </li>
+              </ol>
+            </div>
+
+            <hr className="border-default" />
+
+            <div>
+              <h3 className="font-semibold text-primary mb-3">Top bar icons</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="theme-toggle pointer-events-none"><ArchiveIcon /></span>
+                  <span className="text-secondary"><strong className="text-primary">Archive</strong> -- browse all your saved recipes</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="theme-toggle pointer-events-none"><SettingsIcon /></span>
+                  <span className="text-secondary"><strong className="text-primary">Settings</strong> -- connect Bring! or Todoist</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="theme-toggle pointer-events-none">{theme === "light" ? <MoonIcon /> : <SunIcon />}</span>
+                  <span className="text-secondary"><strong className="text-primary">Theme</strong> -- toggle dark/light mode</span>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="theme-toggle pointer-events-none"><LogoutIcon /></span>
+                  <span className="text-secondary"><strong className="text-primary">Sign out</strong> -- log out of your account</span>
+                </div>
+              </div>
+            </div>
+
+            <hr className="border-default" />
+
+            <div className="text-sm text-secondary">
+              <strong className="text-primary">Tip:</strong> Head to{" "}
+              <Link href="/settings" className="text-accent hover:underline">Settings</Link>
+              {" "}first to connect your Bring! or Todoist account so you can send ingredients directly to your shopping list.
+            </div>
+          </div>
         </div>
       )}
     </main>

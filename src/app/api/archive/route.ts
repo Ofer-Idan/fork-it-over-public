@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+function normalizeUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    parsed.hash = "";
+    if (parsed.pathname.length > 1 && parsed.pathname.endsWith("/")) {
+      parsed.pathname = parsed.pathname.slice(0, -1);
+    }
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
 // GET /api/archive - Get all archived recipes for the current user
 export async function GET(request: NextRequest) {
   try {
@@ -84,7 +97,7 @@ export async function POST(request: NextRequest) {
         {
           user_id: user.id,
           title,
-          source_url: sourceUrl,
+          source_url: normalizeUrl(sourceUrl),
           image,
           prep_time: prepTime,
           cook_time: cookTime,
