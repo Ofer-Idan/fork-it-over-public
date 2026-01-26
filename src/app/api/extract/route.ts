@@ -1,81 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractRecipe } from "@/lib/parser";
-import { promises as fs } from "fs";
-import path from "path";
-import { getRedis, ARCHIVE_KEY } from "@/lib/redis";
+import { createClient } from "@/lib/supabase/server";
 
-interface ArchivedRecipe {
-  id: string;
-  title: string;
-  sourceUrl: string;
-  image?: string;
-  archivedAt: number;
-  prepTime?: string;
-  cookTime?: string;
-  servings?: string;
-}
-
-interface ArchiveData {
-  recipes: ArchivedRecipe[];
-}
-
-const ARCHIVE_PATH = path.join(process.cwd(), "src/data/archive.json");
-
-async function saveToArchive(recipe: {
-  title: string;
-  sourceUrl: string;
-  image?: string;
-  prepTime?: string;
-  cookTime?: string;
-  servings?: string;
-}) {
+async function saveToArchive(
+  userId: string,
+  recipe: {
+    title: string;
+    sourceUrl: string;
+    image?: string;
+    prepTime?: string;
+    cookTime?: string;
+    servings?: string;
+  }
+) {
   try {
-    const redis = getRedis();
-    let archive: ArchiveData;
+    const supabase = await createClient();
 
-    if (redis) {
-      // Use Redis
-      archive = (await redis.get<ArchiveData>(ARCHIVE_KEY)) || { recipes: [] };
-    } else {
-      // Fall back to JSON file
-      try {
-        const data = await fs.readFile(ARCHIVE_PATH, "utf-8");
-        archive = JSON.parse(data);
-      } catch {
-        archive = { recipes: [] };
-      }
-    }
-
-    // Check for duplicate by sourceUrl
-    const existingIndex = archive.recipes.findIndex(
-      (r) => r.sourceUrl === recipe.sourceUrl
+    // Upsert: insert or update if user_id + source_url already exists
+    await supabase.from("recipes").upsert(
+      {
+        user_id: userId,
+        title: recipe.title,
+        source_url: recipe.sourceUrl,
+        image: recipe.image,
+        prep_time: recipe.prepTime,
+        cook_time: recipe.cookTime,
+        servings: recipe.servings,
+        archived_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,source_url" }
     );
-
-    const entry: ArchivedRecipe = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      title: recipe.title,
-      sourceUrl: recipe.sourceUrl,
-      image: recipe.image,
-      archivedAt: Date.now(),
-      prepTime: recipe.prepTime,
-      cookTime: recipe.cookTime,
-      servings: recipe.servings,
-    };
-
-    if (existingIndex >= 0) {
-      // Update existing entry
-      entry.id = archive.recipes[existingIndex].id;
-      archive.recipes[existingIndex] = entry;
-    } else {
-      // Add new entry
-      archive.recipes.push(entry);
-    }
-
-    if (redis) {
-      await redis.set(ARCHIVE_KEY, archive);
-    } else {
-      await fs.writeFile(ARCHIVE_PATH, JSON.stringify(archive, null, 2));
-    }
   } catch (error) {
     console.error("Error saving to archive:", error);
     // Don't fail the request if archiving fails
@@ -84,35 +38,41 @@ async function saveToArchive(recipe: {
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { url } = await request.json();
 
     if (!url || typeof url !== "string") {
-      return NextResponse.json(
-        { error: "URL is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "URL is required" }, { status: 400 });
     }
 
     // Validate URL
     try {
       new URL(url);
     } catch {
-      return NextResponse.json(
-        { error: "Invalid URL" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
     }
 
     const recipe = await extractRecipe(url);
 
     // Auto-save to archive (fire and forget)
-    saveToArchive(recipe);
+    saveToArchive(user.id, recipe);
 
     return NextResponse.json({ recipe });
   } catch (error) {
     console.error("Error extracting recipe:", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to extract recipe" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to extract recipe",
+      },
       { status: 500 }
     );
   }

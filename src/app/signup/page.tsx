@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -11,20 +10,33 @@ const ForkIcon = () => (
   </svg>
 );
 
-export default function LoginPage() {
+export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      setLoading(false);
+      return;
+    }
+
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -33,10 +45,37 @@ export default function LoginPage() {
       setError(error.message);
       setLoading(false);
     } else {
-      router.push("/");
-      router.refresh();
+      setSuccess(true);
+      setLoading(false);
     }
   };
+
+  if (success) {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-6">
+        <div className="w-full max-w-sm text-center">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <span className="text-accent"><ForkIcon /></span>
+            <h1 className="text-3xl font-bold text-primary">
+              Fork It Over
+            </h1>
+          </div>
+          <div className="bg-surface p-6 rounded-xl border border-default">
+            <h2 className="text-xl font-semibold text-primary mb-2">Check your email</h2>
+            <p className="text-secondary mb-4">
+              We&apos;ve sent a confirmation link to <strong>{email}</strong>
+            </p>
+            <p className="text-sm text-secondary">
+              Click the link in the email to activate your account, then{" "}
+              <Link href="/login" className="text-accent hover:underline">
+                sign in
+              </Link>
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
@@ -48,7 +87,7 @@ export default function LoginPage() {
               Fork It Over
             </h1>
           </div>
-          <p className="text-secondary">Sign in to continue</p>
+          <p className="text-secondary">Create your account</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -68,6 +107,15 @@ export default function LoginPage() {
             placeholder="Password"
             className="input-fun w-full"
             required
+            minLength={6}
+          />
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm password"
+            className="input-fun w-full"
+            required
           />
 
           {error && (
@@ -84,18 +132,18 @@ export default function LoginPage() {
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="loading-spinner" />
-                Signing in...
+                Creating account...
               </span>
             ) : (
-              "Sign In"
+              "Sign Up"
             )}
           </button>
         </form>
 
         <p className="text-center text-secondary text-sm mt-6">
-          Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-accent hover:underline">
-            Sign up
+          Already have an account?{" "}
+          <Link href="/login" className="text-accent hover:underline">
+            Sign in
           </Link>
         </p>
       </div>

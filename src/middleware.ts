@@ -1,25 +1,8 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { type NextRequest } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
 
-export function middleware(request: NextRequest) {
-  // Skip auth check for login page and auth API
-  if (
-    request.nextUrl.pathname === "/login" ||
-    request.nextUrl.pathname === "/api/auth"
-  ) {
-    return NextResponse.next();
-  }
-
-  // Check for auth cookie
-  const authCookie = request.cookies.get("hamburgler_auth");
-
-  if (!authCookie || authCookie.value !== process.env.ACCESS_PASSWORD) {
-    // Redirect to login
-    const loginUrl = new URL("/login", request.url);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  return NextResponse.next();
+export async function middleware(request: NextRequest) {
+  return await updateSession(request);
 }
 
 export const config = {
