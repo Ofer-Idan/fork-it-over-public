@@ -1,0 +1,12 @@
+services:
+  hamburgler:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - TODOIST_API_TOKEN=${TODOIST_API_TOKEN}
+      - TODOIST_PROJECT_ID=${TODOIST_PROJECT_ID}
+      - BRING_EMAIL=${BRING_EMAIL}
+      - BRING_PASSWORD=${BRING_PASSWORD}
+      - BRING_LIST_UUID=${BRING_LIST_UUID}
+    restart: unless-stopped

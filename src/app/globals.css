@@ -1,0 +1,335 @@
+@import "tailwindcss";
+
+/* ============================================
+   Fork It Over - Design System
+   ============================================ */
+
+:root {
+  /* Light Mode Colors */
+  --color-background: #FAFAFA;
+  --color-surface: #FFFFFF;
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #6B6B6B;
+  --color-accent: #E85D35;
+  --color-accent-hover: #D14D28;
+  --color-border: #E0E0E0;
+  --color-success: #2D7A3E;
+  --color-error: #DC2626;
+  --color-link: #E85D35;
+}
+
+[data-theme="dark"] {
+  --color-background: #121212;
+  --color-surface: #1E1E1E;
+  --color-text-primary: #F5F5F5;
+  --color-text-secondary: #A0A0A0;
+  --color-accent: #FF7B52;
+  --color-accent-hover: #FF8C68;
+  --color-border: #333333;
+  --color-success: #4CAF50;
+  --color-error: #F87171;
+  --color-link: #FF7B52;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-background: #121212;
+    --color-surface: #1E1E1E;
+    --color-text-primary: #F5F5F5;
+    --color-text-secondary: #A0A0A0;
+    --color-accent: #FF7B52;
+    --color-accent-hover: #FF8C68;
+    --color-border: #333333;
+    --color-success: #4CAF50;
+    --color-error: #F87171;
+    --color-link: #FF7B52;
+  }
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ============================================
+   Animations (Purposeful & Fast)
+   ============================================ */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.15s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.15s ease-out;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Standard transition for interactive elements */
+.transition-default {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   Button Styles
+   ============================================ */
+
+.btn-primary {
+  background-color: var(--color-accent);
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 12px 24px;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-accent-hover);
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary:active {
+  transform: scale(1);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 12px 24px;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-border);
+  transform: scale(1.02);
+}
+
+.btn-secondary:active {
+  transform: scale(1);
+}
+
+/* ============================================
+   Input Styles
+   ============================================ */
+
+.input-field {
+  height: 48px;
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0 16px;
+  font-size: 16px;
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(232, 93, 53, 0.1);
+}
+
+.input-field::placeholder {
+  color: var(--color-text-secondary);
+}
+
+/* Legacy class for compatibility */
+.input-fun {
+  height: 48px;
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0 16px;
+  font-size: 16px;
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.input-fun:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(232, 93, 53, 0.1);
+}
+
+.input-fun::placeholder {
+  color: var(--color-text-secondary);
+}
+
+/* ============================================
+   Card Styles
+   ============================================ */
+
+.recipe-card {
+  background-color: var(--color-surface);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+/* ============================================
+   Checkbox Styles
+   ============================================ */
+
+.ingredient-check {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  flex-shrink: 0;
+  background-color: var(--color-surface);
+}
+
+.ingredient-check:checked {
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.ingredient-check:checked::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.ingredient-check:hover {
+  border-color: var(--color-accent);
+}
+
+/* ============================================
+   Toast Notifications
+   ============================================ */
+
+.toast-success {
+  background-color: var(--color-success);
+  color: white;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.toast-error {
+  background-color: var(--color-error);
+  color: white;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================
+   Dark Mode Toggle
+   ============================================ */
+
+.theme-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  color: var(--color-text-secondary);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-toggle:hover {
+  background-color: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.theme-toggle svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+
+.text-primary {
+  color: var(--color-text-primary);
+}
+
+.text-secondary {
+  color: var(--color-text-secondary);
+}
+
+.text-accent {
+  color: var(--color-accent);
+}
+
+.bg-surface {
+  background-color: var(--color-surface);
+}
+
+.bg-background {
+  background-color: var(--color-background);
+}
+
+.border-default {
+  border-color: var(--color-border);
+}
+
+/* ============================================
+   Loading Spinner
+   ============================================ */
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
