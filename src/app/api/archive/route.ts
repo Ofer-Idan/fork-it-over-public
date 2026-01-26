@@ -126,3 +126,46 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// DELETE /api/archive - Delete a recipe from the archive
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await request.json();
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Recipe ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const { error } = await supabase
+      .from("recipes")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", user.id);
+
+    if (error) {
+      console.error("Error deleting recipe:", error);
+      return NextResponse.json(
+        { error: "Failed to delete recipe" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting recipe:", error);
+    return NextResponse.json(
+      { error: "Failed to delete recipe" },
+      { status: 500 }
+    );
+  }
+}
