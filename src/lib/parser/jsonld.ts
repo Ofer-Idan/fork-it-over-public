@@ -7,7 +7,7 @@ interface JsonLdRecipe {
   image?: string | string[] | { url: string }[];
   description?: string;
   recipeIngredient?: string[];
-  recipeInstructions?: string[] | { "@type": string; text: string }[];
+  recipeInstructions?: string[] | { "@type": string; text: string; name?: string }[];
   notes?: string | string[];
   prepTime?: string;
   cookTime?: string;
@@ -29,8 +29,14 @@ function parseInstructions(
   if (Array.isArray(instructions)) {
     return instructions.map((inst) => {
       if (typeof inst === "string") return inst.trim();
-      if (inst && typeof inst === "object" && "text" in inst)
-        return inst.text.trim();
+      if (inst && typeof inst === "object" && "text" in inst) {
+        const text = inst.text.trim();
+        const name = inst.name?.trim();
+        if (name && !text.toLowerCase().startsWith(name.toLowerCase())) {
+          return `${name}: ${text}`;
+        }
+        return text;
+      }
       return "";
     }).filter(Boolean);
   }
