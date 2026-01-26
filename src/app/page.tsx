@@ -573,13 +573,13 @@ export default function Home() {
                 <h3 className="text-lg font-semibold text-primary mb-4">
                   Instructions
                 </h3>
-                <ol className="space-y-4">
+                <ol className="space-y-6">
                   {recipe.instructions.map((step, i) => (
-                    <li key={i} className="flex gap-4">
-                      <span className="flex-shrink-0 w-7 h-7 bg-[var(--color-accent)] text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                    <li key={i} className="flex gap-4 bg-background p-4 rounded-lg">
+                      <span className="flex-shrink-0 w-8 h-8 bg-[var(--color-accent)] text-white rounded-full flex items-center justify-center text-sm font-semibold">
                         {i + 1}
                       </span>
-                      <p className="text-secondary leading-relaxed pt-0.5">{step}</p>
+                      <p className="text-secondary leading-loose pt-0.5">{step}</p>
                     </li>
                   ))}
                 </ol>
