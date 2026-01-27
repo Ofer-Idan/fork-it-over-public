@@ -273,7 +273,7 @@ export default function Home() {
   };
 
   return (
-    <main className="max-w-4xl mx-auto p-6 pb-20">
+    <main className="max-w-6xl mx-auto p-6 pb-20">
       {/* Top Bar */}
       <div className="flex justify-end gap-2 mb-4">
         <Link
