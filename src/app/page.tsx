@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Recipe, ShoppingApp } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
@@ -85,6 +85,14 @@ const LogoutIcon = () => (
 );
 
 export default function Home() {
+  return (
+    <Suspense>
+      <HomeContent />
+    </Suspense>
+  );
+}
+
+function HomeContent() {
   const [url, setUrl] = useState("");
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(false);
@@ -155,8 +163,7 @@ export default function Home() {
     });
   };
 
-  const handleExtract = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const extractFromUrl = useCallback(async (recipeUrl: string) => {
     setLoading(true);
     setError(null);
     setRecipe(null);
@@ -166,7 +173,7 @@ export default function Home() {
       const response = await fetch("/api/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url: recipeUrl }),
       });
 
       const data = await response.json();
@@ -185,7 +192,22 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  const handleExtract = async (e: React.FormEvent) => {
+    e.preventDefault();
+    extractFromUrl(url);
   };
+
+  // Auto-extract if ?url= param is present (e.g. from archive)
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const paramUrl = searchParams.get("url");
+    if (paramUrl) {
+      setUrl(paramUrl);
+      extractFromUrl(paramUrl);
+    }
+  }, [searchParams, extractFromUrl]);
 
   const handleLoadSaved = (savedRecipe: SavedRecipe) => {
     setUrl(savedRecipe.sourceUrl);

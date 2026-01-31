@@ -204,29 +204,33 @@ export default function ArchivePage() {
               className="bg-surface border border-default rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
             >
               {/* Image */}
-              {recipe.image ? (
-                <div className="relative h-40 bg-background">
-                  <Image
-                    src={recipe.image}
-                    alt={recipe.title}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
-                </div>
-              ) : (
-                <div className="h-40 bg-background flex items-center justify-center">
-                  <span className="text-secondary">
-                    <ForkIcon />
-                  </span>
-                </div>
-              )}
+              <Link href={`/?url=${encodeURIComponent(recipe.sourceUrl)}`} className="block">
+                {recipe.image ? (
+                  <div className="relative h-40 bg-background">
+                    <Image
+                      src={recipe.image}
+                      alt={recipe.title}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                ) : (
+                  <div className="h-40 bg-background flex items-center justify-center">
+                    <span className="text-secondary">
+                      <ForkIcon />
+                    </span>
+                  </div>
+                )}
+              </Link>
 
               {/* Content */}
               <div className="p-4">
-                <h2 className="font-semibold text-primary mb-1 line-clamp-2">
-                  {recipe.title}
-                </h2>
+                <Link href={`/?url=${encodeURIComponent(recipe.sourceUrl)}`} className="block">
+                  <h2 className="font-semibold text-primary mb-1 line-clamp-2 hover:text-accent transition-colors">
+                    {recipe.title}
+                  </h2>
+                </Link>
                 <p className="text-sm text-secondary mb-3">
                   {getDomain(recipe.sourceUrl)}
                 </p>
