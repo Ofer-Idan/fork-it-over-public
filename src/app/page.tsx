@@ -48,12 +48,6 @@ const ClockIcon = () => (
   </svg>
 );
 
-const UsersIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-  </svg>
-);
-
 const ChevronIcon = ({ open }: { open: boolean }) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
@@ -107,18 +101,10 @@ function HomeContent() {
   const [showHistory, setShowHistory] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [loggingOut, setLoggingOut] = useState(false);
-  const [currentServings, setCurrentServings] = useState<number | null>(null);
+  const [multiplier, setMultiplier] = useState(1);
   const router = useRouter();
 
-  // Parse the original servings count from the recipe
-  const originalServings = recipe?.servings
-    ? parseInt(recipe.servings.match(/\d+/)?.[0] || "", 10) || null
-    : null;
-
-  // Derive multiplier from currentServings vs originalServings, or use currentServings as direct multiplier
-  const multiplier = originalServings && currentServings
-    ? currentServings / originalServings
-    : currentServings ?? 1;
+  const MULTIPLIER_OPTIONS = [0.5, 1, 2, 3] as const;
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -195,7 +181,7 @@ function HomeContent() {
       }
 
       setRecipe(data.recipe);
-      setCurrentServings(null);
+      setMultiplier(1);
       setSelectedIngredients(
         new Set(data.recipe.ingredients.map((_: unknown, i: number) => i))
       );
@@ -512,48 +498,21 @@ function HomeContent() {
                   <ClockIcon /> Cook: {recipe.cookTime}
                 </div>
               )}
-              {originalServings ? (
-                <div className="flex items-center gap-1 bg-background rounded-full text-sm text-secondary">
+              <div className="flex items-center gap-1 bg-background rounded-full text-sm text-secondary">
+                {MULTIPLIER_OPTIONS.map((opt) => (
                   <button
-                    onClick={() => setCurrentServings(s => {
-                      const cur = s ?? originalServings;
-                      return Math.max(1, cur - 1);
-                    })}
-                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--color-accent)] hover:text-white transition-colors"
-                    aria-label="Decrease servings"
+                    key={opt}
+                    onClick={() => setMultiplier(opt)}
+                    className={`px-3 py-1.5 rounded-full font-medium transition-colors ${
+                      multiplier === opt
+                        ? "bg-[var(--color-accent)] text-white"
+                        : "hover:bg-[var(--color-accent)]/10"
+                    }`}
                   >
-                    -
+                    {opt}x
                   </button>
-                  <span className="flex items-center gap-1.5 px-1">
-                    <UsersIcon /> {currentServings ?? originalServings} servings
-                  </span>
-                  <button
-                    onClick={() => setCurrentServings(s => (s ?? originalServings) + 1)}
-                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--color-accent)] hover:text-white transition-colors"
-                    aria-label="Increase servings"
-                  >
-                    +
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1 bg-background rounded-full text-sm text-secondary">
-                  <button
-                    onClick={() => setCurrentServings(s => Math.max(0.5, (s ?? 1) - 0.5))}
-                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--color-accent)] hover:text-white transition-colors"
-                    aria-label="Decrease multiplier"
-                  >
-                    -
-                  </button>
-                  <span className="px-1">{currentServings ?? 1}x</span>
-                  <button
-                    onClick={() => setCurrentServings(s => (s ?? 1) + 0.5)}
-                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--color-accent)] hover:text-white transition-colors"
-                    aria-label="Increase multiplier"
-                  >
-                    +
-                  </button>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">

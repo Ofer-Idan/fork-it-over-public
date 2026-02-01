@@ -1,6 +1,23 @@
+import he from "he";
 import type { Recipe } from "../types";
 import { extractFromJsonLd } from "./jsonld";
 import { extractWithHeuristics, extractNotesFromHtml } from "./heuristic";
+
+function decodeRecipeEntities(recipe: Recipe): Recipe {
+  const decode = (s: string) => he.decode(s);
+  return {
+    ...recipe,
+    title: decode(recipe.title),
+    description: recipe.description ? decode(recipe.description) : undefined,
+    ingredients: recipe.ingredients.map((ing) => ({
+      ...ing,
+      original: decode(ing.original),
+      name: ing.name ? decode(ing.name) : undefined,
+    })),
+    instructions: recipe.instructions.map(decode),
+    notes: recipe.notes?.map(decode),
+  };
+}
 
 export async function extractRecipe(url: string): Promise<Recipe> {
   const response = await fetch(url, {
@@ -28,13 +45,13 @@ export async function extractRecipe(url: string): Promise<Recipe> {
         jsonLdRecipe.notes = htmlNotes;
       }
     }
-    return jsonLdRecipe;
+    return decodeRecipeEntities(jsonLdRecipe);
   }
 
   // Fall back to heuristics
   const heuristicRecipe = extractWithHeuristics(html, url);
   if (heuristicRecipe) {
-    return heuristicRecipe;
+    return decodeRecipeEntities(heuristicRecipe);
   }
 
   throw new Error("Could not extract recipe from URL");
