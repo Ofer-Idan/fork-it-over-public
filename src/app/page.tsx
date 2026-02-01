@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Recipe, ShoppingApp } from "@/lib/types";
+import { formatIngredient } from "@/lib/parser/ingredients";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -106,7 +107,18 @@ function HomeContent() {
   const [showHistory, setShowHistory] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [loggingOut, setLoggingOut] = useState(false);
+  const [currentServings, setCurrentServings] = useState<number | null>(null);
   const router = useRouter();
+
+  // Parse the original servings count from the recipe
+  const originalServings = recipe?.servings
+    ? parseInt(recipe.servings.match(/\d+/)?.[0] || "", 10) || null
+    : null;
+
+  // Derive multiplier from currentServings vs originalServings, or use currentServings as direct multiplier
+  const multiplier = originalServings && currentServings
+    ? currentServings / originalServings
+    : currentServings ?? 1;
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -183,6 +195,7 @@ function HomeContent() {
       }
 
       setRecipe(data.recipe);
+      setCurrentServings(null);
       setSelectedIngredients(
         new Set(data.recipe.ingredients.map((_: unknown, i: number) => i))
       );
@@ -247,7 +260,7 @@ function HomeContent() {
 
     const ingredients = recipe.ingredients
       .filter((_, i) => selectedIngredients.has(i))
-      .map((ing) => ing.original);
+      .map((ing) => formatIngredient(ing, multiplier));
 
     try {
       const response = await fetch("/api/send", {
@@ -499,9 +512,46 @@ function HomeContent() {
                   <ClockIcon /> Cook: {recipe.cookTime}
                 </div>
               )}
-              {recipe.servings && (
-                <div className="flex items-center gap-2 bg-background px-3 py-1.5 rounded-full text-sm text-secondary">
-                  <UsersIcon /> Serves: {recipe.servings}
+              {originalServings ? (
+                <div className="flex items-center gap-1 bg-background rounded-full text-sm text-secondary">
+                  <button
+                    onClick={() => setCurrentServings(s => {
+                      const cur = s ?? originalServings;
+                      return Math.max(1, cur - 1);
+                    })}
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--color-accent)] hover:text-white transition-colors"
+                    aria-label="Decrease servings"
+                  >
+                    -
+                  </button>
+                  <span className="flex items-center gap-1.5 px-1">
+                    <UsersIcon /> {currentServings ?? originalServings} servings
+                  </span>
+                  <button
+                    onClick={() => setCurrentServings(s => (s ?? originalServings) + 1)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--color-accent)] hover:text-white transition-colors"
+                    aria-label="Increase servings"
+                  >
+                    +
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 bg-background rounded-full text-sm text-secondary">
+                  <button
+                    onClick={() => setCurrentServings(s => Math.max(0.5, (s ?? 1) - 0.5))}
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--color-accent)] hover:text-white transition-colors"
+                    aria-label="Decrease multiplier"
+                  >
+                    -
+                  </button>
+                  <span className="px-1">{currentServings ?? 1}x</span>
+                  <button
+                    onClick={() => setCurrentServings(s => (s ?? 1) + 0.5)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--color-accent)] hover:text-white transition-colors"
+                    aria-label="Increase multiplier"
+                  >
+                    +
+                  </button>
                 </div>
               )}
             </div>
@@ -553,7 +603,7 @@ function HomeContent() {
                             : "text-secondary line-through"
                         }`}
                       >
-                        {ing.original}
+                        {formatIngredient(ing, multiplier)}
                       </span>
                     </li>
                   ))}

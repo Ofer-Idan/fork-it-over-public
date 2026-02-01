@@ -1,11 +1,6 @@
 import * as cheerio from "cheerio";
 import type { Recipe, Ingredient } from "../types";
-
-function parseIngredient(text: string): Ingredient {
-  return {
-    original: text.trim(),
-  };
-}
+import { parseIngredient } from "./ingredients";
 
 // Expanded selectors for finding recipe notes/tips in HTML
 const NOTE_SELECTORS = [

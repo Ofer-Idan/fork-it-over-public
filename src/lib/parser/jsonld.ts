@@ -1,5 +1,6 @@
 import * as cheerio from "cheerio";
-import type { Recipe, Ingredient } from "../types";
+import type { Recipe } from "../types";
+import { parseIngredient } from "./ingredients";
 
 interface JsonLdRecipe {
   "@type": string | string[];
@@ -13,12 +14,6 @@ interface JsonLdRecipe {
   cookTime?: string;
   totalTime?: string;
   recipeYield?: string | string[];
-}
-
-function parseIngredient(text: string): Ingredient {
-  return {
-    original: text.trim(),
-  };
 }
 
 function parseInstructions(
