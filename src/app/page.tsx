@@ -539,33 +539,44 @@ function HomeContent() {
                   </div>
                 </div>
                 <ul className="space-y-2">
-                  {recipe.ingredients.map((ing, i) => (
-                    <li
-                      key={i}
-                      className={`flex items-start gap-3 p-3 rounded-lg transition-colors cursor-pointer ${
-                        selectedIngredients.has(i)
-                          ? "bg-background"
-                          : "bg-transparent"
-                      }`}
-                      onClick={() => toggleIngredient(i)}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedIngredients.has(i)}
-                        onChange={() => toggleIngredient(i)}
-                        className="ingredient-check mt-0.5"
-                      />
-                      <span
-                        className={`transition-colors ${
-                          selectedIngredients.has(i)
-                            ? "text-primary"
-                            : "text-secondary line-through"
-                        }`}
-                      >
-                        {formatIngredient(ing, multiplier)}
-                      </span>
-                    </li>
-                  ))}
+                  {recipe.ingredients.map((ing, i) => {
+                    const showGroupHeader =
+                      ing.group &&
+                      (i === 0 || recipe.ingredients[i - 1].group !== ing.group);
+                    return (
+                      <li key={i}>
+                        {showGroupHeader && (
+                          <p className={`text-sm font-semibold text-secondary uppercase tracking-wide ${i === 0 ? "mb-2" : "mt-4 mb-2"}`}>
+                            {ing.group}
+                          </p>
+                        )}
+                        <div
+                          className={`flex items-start gap-3 p-3 rounded-lg transition-colors cursor-pointer ${
+                            selectedIngredients.has(i)
+                              ? "bg-background"
+                              : "bg-transparent"
+                          }`}
+                          onClick={() => toggleIngredient(i)}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedIngredients.has(i)}
+                            onChange={() => toggleIngredient(i)}
+                            className="ingredient-check mt-0.5"
+                          />
+                          <span
+                            className={`transition-colors ${
+                              selectedIngredients.has(i)
+                                ? "text-primary"
+                                : "text-secondary line-through"
+                            }`}
+                          >
+                            {formatIngredient(ing, multiplier)}
+                          </span>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
 
                 {/* Send Buttons */}

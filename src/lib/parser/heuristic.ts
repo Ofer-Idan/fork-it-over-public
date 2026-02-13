@@ -57,6 +57,91 @@ const NOTE_SELECTORS = [
   '.easyrecipe .notes',
 ];
 
+/**
+ * Extract ingredient group names from HTML.
+ * Returns one group name per ingredient, in order, so they can be
+ * zipped onto the flat ingredient list from JSON-LD.
+ * Returns empty array if no groups are found.
+ */
+export function extractIngredientGroupsFromHtml(html: string): string[] {
+  const $ = cheerio.load(html);
+  const groups: string[] = [];
+
+  // Strategy: look for known recipe plugin structures that use
+  // headings/labels before grouped <ul> ingredient lists.
+  const strategies: (() => boolean)[] = [
+    // Tasty Recipes: <p>Group Name</p> then <ul><li>...</li></ul>
+    () => {
+      const body = $(".tasty-recipes-ingredients-body");
+      if (body.length === 0) return false;
+      let found = false;
+      let currentGroup = "";
+      body.children().each((_, el) => {
+        const tag = (el as unknown as { tagName?: string }).tagName?.toLowerCase();
+        if (tag === "p" || tag === "h4" || tag === "h3") {
+          const text = $(el).text().trim();
+          if (text && text.length < 80) {
+            currentGroup = text;
+          }
+        } else if (tag === "ul") {
+          $(el).children("li").each(() => {
+            groups.push(currentGroup);
+            found = true;
+          });
+        }
+      });
+      return found && currentGroup !== "";
+    },
+    // WPRM (WP Recipe Maker): .wprm-recipe-ingredient-group with .wprm-recipe-group-name
+    () => {
+      const wprm = $(".wprm-recipe-ingredient-group");
+      if (wprm.length === 0) return false;
+      let found = false;
+      wprm.each((_, group) => {
+        const name = $(group).find(".wprm-recipe-group-name").first().text().trim();
+        $(group).find("li").each(() => {
+          groups.push(name);
+          found = true;
+        });
+      });
+      return found && groups.some((g) => g !== "");
+    },
+    // Generic: recipe ingredients container with h4/h3 subheadings
+    () => {
+      const container = $('[class*="ingredients"]').filter((_, el) => {
+        return $(el).find("h3, h4").length > 0 && $(el).find("li").length > 0;
+      }).first();
+      if (container.length === 0) return false;
+      let found = false;
+      let currentGroup = "";
+      container.children().each((_, el) => {
+        const tag = (el as unknown as { tagName?: string }).tagName?.toLowerCase();
+        if (tag === "h3" || tag === "h4") {
+          const text = $(el).text().trim();
+          if (text && text.length < 80) {
+            currentGroup = text;
+          }
+        } else if (tag === "ul" || tag === "div") {
+          $(el).find("li").each(() => {
+            groups.push(currentGroup);
+            found = true;
+          });
+        }
+      });
+      return found && currentGroup !== "";
+    },
+  ];
+
+  for (const strategy of strategies) {
+    groups.length = 0;
+    if (strategy()) {
+      return groups;
+    }
+  }
+
+  return [];
+}
+
 export function extractNotesFromHtml(html: string): string[] {
   const $ = cheerio.load(html);
   const notes: string[] = [];
@@ -156,6 +241,14 @@ export function extractWithHeuristics(
       });
       break;
     }
+  }
+
+  // Assign ingredient groups from HTML
+  const ingredientGroups = extractIngredientGroupsFromHtml(html);
+  if (ingredientGroups.length === ingredients.length) {
+    ingredients.forEach((ing, i) => {
+      ing.group = ingredientGroups[i] || undefined;
+    });
   }
 
   // Try to find notes using the shared extraction function

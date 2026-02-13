@@ -1,7 +1,7 @@
 import he from "he";
 import type { Recipe } from "../types";
 import { extractFromJsonLd } from "./jsonld";
-import { extractWithHeuristics, extractNotesFromHtml } from "./heuristic";
+import { extractWithHeuristics, extractNotesFromHtml, extractIngredientGroupsFromHtml } from "./heuristic";
 
 function decodeRecipeEntities(recipe: Recipe): Recipe {
   const decode = (s: string) => he.decode(s);
@@ -13,6 +13,7 @@ function decodeRecipeEntities(recipe: Recipe): Recipe {
       ...ing,
       original: decode(ing.original),
       name: ing.name ? decode(ing.name) : undefined,
+      group: ing.group ? decode(ing.group) : undefined,
     })),
     instructions: recipe.instructions.map(decode),
     notes: recipe.notes?.map(decode),
@@ -38,6 +39,14 @@ export async function extractRecipe(url: string): Promise<Recipe> {
   // Try JSON-LD first (most reliable)
   const jsonLdRecipe = extractFromJsonLd(html, url);
   if (jsonLdRecipe) {
+    // JSON-LD doesn't include ingredient groups — extract from HTML
+    const ingredientGroups = extractIngredientGroupsFromHtml(html);
+    if (ingredientGroups.length === jsonLdRecipe.ingredients.length) {
+      jsonLdRecipe.ingredients.forEach((ing, i) => {
+        ing.group = ingredientGroups[i] || undefined;
+      });
+    }
+
     // If JSON-LD doesn't have notes, try to extract them from HTML
     if (!jsonLdRecipe.notes || jsonLdRecipe.notes.length === 0) {
       const htmlNotes = extractNotesFromHtml(html);
