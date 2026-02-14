@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 const ForkIcon = () => (
@@ -11,9 +10,9 @@ const ForkIcon = () => (
   </svg>
 );
 
-export default function LoginPage() {
-  const [email, setEmail] = useState("");
+export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -23,11 +22,20 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      setLoading(false);
+      return;
+    }
+
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
       setError(error.message);
@@ -48,33 +56,28 @@ export default function LoginPage() {
               Fork It Over
             </h1>
           </div>
-          <p className="text-secondary">Sign in to continue</p>
+          <p className="text-secondary">Set your new password</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="input-fun w-full"
-            required
-            autoFocus
-          />
-          <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
+            placeholder="New password"
+            className="input-fun w-full"
+            required
+            autoFocus
+            minLength={6}
+          />
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            placeholder="Confirm new password"
             className="input-fun w-full"
             required
           />
-
-          <div className="text-right">
-            <Link href="/forgot-password" className="text-accent hover:underline text-sm">
-              Forgot password?
-            </Link>
-          </div>
 
           {error && (
             <div className="toast-error animate-fade-in text-center">
@@ -90,20 +93,13 @@ export default function LoginPage() {
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="loading-spinner" />
-                Signing in...
+                Updating...
               </span>
             ) : (
-              "Sign In"
+              "Update Password"
             )}
           </button>
         </form>
-
-        <p className="text-center text-secondary text-sm mt-6">
-          Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-accent hover:underline">
-            Sign up
-          </Link>
-        </p>
       </div>
     </main>
   );
