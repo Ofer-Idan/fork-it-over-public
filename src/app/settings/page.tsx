@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 const ForkIcon = () => (
   <svg
@@ -58,11 +59,21 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [userEmail, setUserEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
-    async function fetchSettings() {
+    async function fetchData() {
       try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user?.email) setUserEmail(user.email);
+
         const response = await fetch("/api/settings");
         if (response.ok) {
           const data = await response.json();
@@ -74,7 +85,7 @@ export default function SettingsPage() {
         setLoading(false);
       }
     }
-    fetchSettings();
+    fetchData();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -108,6 +119,42 @@ export default function SettingsPage() {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess(false);
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+      return;
+    }
+
+    setPasswordSaving(true);
+    const supabase = createClient();
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+    if (error) {
+      setPasswordError(error.message);
+    } else {
+      setPasswordSuccess(true);
+      setNewPassword("");
+      setConfirmPassword("");
+      setTimeout(() => setPasswordSuccess(false), 3000);
+    }
+    setPasswordSaving(false);
+  };
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
+
   if (loading) {
     return (
       <main className="max-w-2xl mx-auto p-6">
@@ -136,6 +183,103 @@ export default function SettingsPage() {
           <h1 className="text-2xl font-bold text-primary">Settings</h1>
         </div>
       </div>
+
+      {/* Account Section */}
+      <section className="bg-surface p-6 rounded-xl border border-default mb-8">
+        <h2 className="text-lg font-semibold text-primary mb-1">Account</h2>
+        <p className="text-sm text-secondary mb-4">
+          Manage your account credentials.
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-primary mb-1">
+              Email
+            </label>
+            <input
+              type="email"
+              value={userEmail}
+              readOnly
+              className="input-fun w-full opacity-60 cursor-not-allowed"
+            />
+          </div>
+
+          <form onSubmit={handlePasswordUpdate} className="space-y-4">
+            <div>
+              <label
+                htmlFor="newPassword"
+                className="block text-sm font-medium text-primary mb-1"
+              >
+                New Password
+              </label>
+              <input
+                type="password"
+                id="newPassword"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="input-fun w-full"
+                placeholder="New password"
+                minLength={6}
+                required
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-primary mb-1"
+              >
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                id="confirmPassword"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="input-fun w-full"
+                placeholder="Confirm new password"
+                minLength={6}
+                required
+              />
+            </div>
+
+            {passwordError && (
+              <div className="toast-error animate-fade-in text-center">
+                {passwordError}
+              </div>
+            )}
+            {passwordSuccess && (
+              <div className="toast-success animate-fade-in text-center">
+                Password updated successfully
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={passwordSaving}
+              className="btn-primary w-full"
+            >
+              {passwordSaving ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="loading-spinner" />
+                  Updating...
+                </span>
+              ) : (
+                "Update Password"
+              )}
+            </button>
+          </form>
+
+          <hr className="border-default" />
+
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="w-full py-2 px-4 rounded-lg border border-default text-secondary hover:text-primary hover:border-red-400 transition-colors"
+          >
+            Sign Out
+          </button>
+        </div>
+      </section>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Bring! Section */}
