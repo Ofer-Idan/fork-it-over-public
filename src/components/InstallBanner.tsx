@@ -6,15 +6,25 @@ const DISMISSED_KEY = "pwa_install_dismissed";
 
 export default function InstallBanner() {
   const [show, setShow] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
-    // Only show on iOS Safari, not already in standalone PWA mode
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    // Already in standalone PWA mode — don't show
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches
       || ("standalone" in navigator && (navigator as unknown as { standalone: boolean }).standalone);
-    const isDismissed = localStorage.getItem(DISMISSED_KEY) === "1";
+    if (isStandalone) return;
 
-    if (isIOS && !isStandalone && !isDismissed) {
+    // Already dismissed
+    if (localStorage.getItem(DISMISSED_KEY) === "1") return;
+
+    // Detect iOS (including iPads that report as Mac)
+    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+    setIsIOS(ios);
+
+    // Show on mobile devices (iOS + Android)
+    const isMobile = ios || /Android/i.test(navigator.userAgent);
+    if (isMobile) {
       setShow(true);
     }
   }, []);
@@ -35,13 +45,21 @@ export default function InstallBanner() {
               Add Fork It Over to your home screen
             </p>
             <p className="text-secondary text-xs leading-relaxed">
-              Tap the share button{" "}
-              <span className="inline-block align-middle">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 inline">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15M9 12l3-3m0 0l3 3m-3-3v12" />
-                </svg>
-              </span>
-              {" "}in Safari, then scroll down and tap <strong>&quot;Add to Home Screen&quot;</strong>
+              {isIOS ? (
+                <>
+                  Tap the share button{" "}
+                  <span className="inline-block align-middle">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 inline">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15M9 12l3-3m0 0l3 3m-3-3v12" />
+                    </svg>
+                  </span>
+                  {" "}in Safari, then tap <strong>&quot;Add to Home Screen&quot;</strong>
+                </>
+              ) : (
+                <>
+                  Tap the menu button <strong>&#8942;</strong> in Chrome, then tap <strong>&quot;Add to Home Screen&quot;</strong>
+                </>
+              )}
             </p>
           </div>
           <button
