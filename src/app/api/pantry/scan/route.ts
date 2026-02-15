@@ -4,7 +4,9 @@ import OpenAI from "openai";
 import { toCanonicalName } from "@/lib/pantry/canonical";
 import type { PantryCategory, QuantityType, BulkQuantity, BinaryQuantity, StorageLocation } from "@/lib/types";
 
-const openai = new OpenAI();
+function getOpenAI() {
+  return new OpenAI();
+}
 
 const SYSTEM_PROMPT = `You are a kitchen inventory assistant. You analyze photos of food storage areas (pantry shelves, refrigerator interiors, freezer compartments, and spice racks) to identify individual food items.
 
@@ -104,7 +106,7 @@ Example: {"items": [{"name": "all-purpose flour", "brand": "King Arthur", "categ
 
 Return ONLY the JSON object.`;
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4.1-mini",
       max_tokens: 4096,
       response_format: { type: "json_object" },

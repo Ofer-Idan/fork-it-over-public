@@ -4,7 +4,9 @@ import OpenAI from "openai";
 import type { Ingredient } from "@/lib/types";
 import { suggestDepletion } from "@/lib/pantry/depletion";
 
-const openai = new OpenAI();
+function getOpenAI() {
+  return new OpenAI();
+}
 
 // POST /api/pantry/deduct - Match recipe ingredients to pantry items
 export async function POST(request: NextRequest) {
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest) {
     }));
 
     // AI does MATCHING ONLY — no depletion logic
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: "gpt-4.1-nano",
       max_tokens: 4096,
       messages: [
