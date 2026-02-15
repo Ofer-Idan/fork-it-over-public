@@ -2,18 +2,42 @@ import * as cheerio from "cheerio";
 import type { Recipe } from "../types";
 import { parseIngredient } from "./ingredients";
 
+interface JsonLdInstruction {
+  "@type"?: string;
+  text?: string;
+  name?: string;
+  itemListElement?: JsonLdInstruction[];
+}
+
 interface JsonLdRecipe {
   "@type": string | string[];
   name?: string;
   image?: string | string[] | { url: string }[];
   description?: string;
   recipeIngredient?: string[];
-  recipeInstructions?: string[] | { "@type": string; text: string; name?: string }[];
+  recipeInstructions?: string[] | JsonLdInstruction[];
   notes?: string | string[];
   prepTime?: string;
   cookTime?: string;
   totalTime?: string;
   recipeYield?: string | string[];
+}
+
+function flattenSteps(item: JsonLdInstruction): string[] {
+  // HowToSection: recurse into itemListElement
+  if (item.itemListElement && Array.isArray(item.itemListElement)) {
+    return item.itemListElement.flatMap(flattenSteps);
+  }
+  // HowToStep or plain object with text
+  if (item.text) {
+    const text = item.text.trim();
+    const name = item.name?.trim();
+    if (name && !text.toLowerCase().startsWith(name.toLowerCase())) {
+      return [`${name}: ${text}`];
+    }
+    return [text];
+  }
+  return [];
 }
 
 function parseInstructions(
@@ -22,17 +46,10 @@ function parseInstructions(
   if (!instructions) return [];
 
   if (Array.isArray(instructions)) {
-    return instructions.map((inst) => {
-      if (typeof inst === "string") return inst.trim();
-      if (inst && typeof inst === "object" && "text" in inst) {
-        const text = inst.text.trim();
-        const name = inst.name?.trim();
-        if (name && !text.toLowerCase().startsWith(name.toLowerCase())) {
-          return `${name}: ${text}`;
-        }
-        return text;
-      }
-      return "";
+    return instructions.flatMap((inst) => {
+      if (typeof inst === "string") return [inst.trim()];
+      if (inst && typeof inst === "object") return flattenSteps(inst);
+      return [];
     }).filter(Boolean);
   }
 
