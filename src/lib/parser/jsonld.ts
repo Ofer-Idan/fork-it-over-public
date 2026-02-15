@@ -26,7 +26,14 @@ interface JsonLdRecipe {
 function flattenSteps(item: JsonLdInstruction): string[] {
   // HowToSection: recurse into itemListElement
   if (item.itemListElement && Array.isArray(item.itemListElement)) {
-    return item.itemListElement.flatMap(flattenSteps);
+    const steps: string[] = [];
+    // Include the section name as a step if it looks like an instruction
+    // (contains a verb/action, not just a label like "For the sauce")
+    if (item.name && !item.text && item.name.length > 5) {
+      steps.push(item.name.trim());
+    }
+    steps.push(...item.itemListElement.flatMap(flattenSteps));
+    return steps;
   }
   // HowToStep or plain object with text
   if (item.text) {
