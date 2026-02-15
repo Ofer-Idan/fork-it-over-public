@@ -49,57 +49,59 @@ export default function ResetPasswordPage() {
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <span className="text-accent"><ForkIcon /></span>
-            <h1 className="text-3xl font-bold text-primary">
-              Fork It Over
-            </h1>
-          </div>
-          <p className="text-secondary">Set your new password</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="New password"
-            className="input-fun w-full"
-            required
-            autoFocus
-            minLength={6}
-          />
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm new password"
-            className="input-fun w-full"
-            required
-          />
-
-          {error && (
-            <div className="toast-error animate-fade-in text-center">
-              {error}
+        <div className="bg-surface border border-default rounded-xl p-8 shadow-lg">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <span className="text-accent"><ForkIcon /></span>
+              <h1 className="text-3xl font-bold text-primary tracking-tight">
+                Fork It Over
+              </h1>
             </div>
-          )}
+            <p className="text-secondary text-sm">Set your new password</p>
+          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary w-full text-lg"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="loading-spinner" />
-                Updating...
-              </span>
-            ) : (
-              "Update Password"
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="New password"
+              className="input-field w-full"
+              required
+              autoFocus
+              minLength={6}
+            />
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm new password"
+              className="input-field w-full"
+              required
+            />
+
+            {error && (
+              <div className="toast-error animate-fade-in text-center">
+                {error}
+              </div>
             )}
-          </button>
-        </form>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary w-full text-lg"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="loading-spinner" />
+                  Updating...
+                </span>
+              ) : (
+                "Update Password"
+              )}
+            </button>
+          </form>
+        </div>
       </div>
     </main>
   );

@@ -207,14 +207,14 @@ export default function SettingsPage() {
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-primary mb-1">
+            <label className="block text-sm font-medium text-secondary mb-1">
               Email
             </label>
             <input
               type="email"
               value={userEmail}
               readOnly
-              className="input-fun w-full opacity-60 cursor-not-allowed"
+              className="input-field w-full opacity-60 cursor-not-allowed"
             />
           </div>
 
@@ -222,7 +222,7 @@ export default function SettingsPage() {
             <div>
               <label
                 htmlFor="currentPassword"
-                className="block text-sm font-medium text-primary mb-1"
+                className="block text-sm font-medium text-secondary mb-1"
               >
                 Current Password
               </label>
@@ -231,7 +231,7 @@ export default function SettingsPage() {
                 id="currentPassword"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="input-fun w-full"
+                className="input-field w-full"
                 placeholder="Current password"
                 required
               />
@@ -239,7 +239,7 @@ export default function SettingsPage() {
             <div>
               <label
                 htmlFor="newPassword"
-                className="block text-sm font-medium text-primary mb-1"
+                className="block text-sm font-medium text-secondary mb-1"
               >
                 New Password
               </label>
@@ -248,7 +248,7 @@ export default function SettingsPage() {
                 id="newPassword"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="input-fun w-full"
+                className="input-field w-full"
                 placeholder="New password"
                 minLength={6}
                 required
@@ -257,7 +257,7 @@ export default function SettingsPage() {
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="block text-sm font-medium text-primary mb-1"
+                className="block text-sm font-medium text-secondary mb-1"
               >
                 Confirm Password
               </label>
@@ -266,7 +266,7 @@ export default function SettingsPage() {
                 id="confirmPassword"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="input-fun w-full"
+                className="input-field w-full"
                 placeholder="Confirm new password"
                 minLength={6}
                 required
@@ -305,7 +305,7 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={handleSignOut}
-            className="w-full py-2 px-4 rounded-lg border border-default text-secondary hover:text-primary hover:border-red-400 transition-colors"
+            className="w-full py-2 px-4 rounded-lg border border-[var(--color-border-subtle)] text-secondary hover:text-[var(--color-error)] hover:border-[var(--color-error)] transition-colors"
           >
             Sign Out
           </button>
@@ -325,7 +325,7 @@ export default function SettingsPage() {
             <div>
               <label
                 htmlFor="bringEmail"
-                className="block text-sm font-medium text-primary mb-1"
+                className="block text-sm font-medium text-secondary mb-1"
               >
                 Email
               </label>
@@ -334,7 +334,7 @@ export default function SettingsPage() {
                 id="bringEmail"
                 value={settings.bringEmail}
                 onChange={(e) => updateSetting("bringEmail", e.target.value)}
-                className="input-fun w-full"
+                className="input-field w-full"
                 placeholder="your@email.com"
               />
             </div>
@@ -342,7 +342,7 @@ export default function SettingsPage() {
             <div>
               <label
                 htmlFor="bringPassword"
-                className="block text-sm font-medium text-primary mb-1"
+                className="block text-sm font-medium text-secondary mb-1"
               >
                 Password
               </label>
@@ -351,7 +351,7 @@ export default function SettingsPage() {
                 id="bringPassword"
                 value={settings.bringPassword}
                 onChange={(e) => updateSetting("bringPassword", e.target.value)}
-                className="input-fun w-full"
+                className="input-field w-full"
                 placeholder="Your Bring! password"
               />
             </div>
@@ -359,7 +359,7 @@ export default function SettingsPage() {
             <div>
               <label
                 htmlFor="bringListUuid"
-                className="block text-sm font-medium text-primary mb-1"
+                className="block text-sm font-medium text-secondary mb-1"
               >
                 List UUID{" "}
                 <span className="text-secondary font-normal">(optional)</span>
@@ -369,7 +369,7 @@ export default function SettingsPage() {
                 id="bringListUuid"
                 value={settings.bringListUuid}
                 onChange={(e) => updateSetting("bringListUuid", e.target.value)}
-                className="input-fun w-full"
+                className="input-field w-full"
                 placeholder="Leave blank for default list"
               />
               <p className="text-xs text-secondary mt-1">
@@ -391,7 +391,7 @@ export default function SettingsPage() {
             <div>
               <label
                 htmlFor="todoistApiToken"
-                className="block text-sm font-medium text-primary mb-1"
+                className="block text-sm font-medium text-secondary mb-1"
               >
                 API Token
               </label>
@@ -402,7 +402,7 @@ export default function SettingsPage() {
                 onChange={(e) =>
                   updateSetting("todoistApiToken", e.target.value)
                 }
-                className="input-fun w-full"
+                className="input-field w-full"
                 placeholder="Your Todoist API token"
               />
               <p className="text-xs text-secondary mt-1">
@@ -414,7 +414,7 @@ export default function SettingsPage() {
             <div>
               <label
                 htmlFor="todoistProjectId"
-                className="block text-sm font-medium text-primary mb-1"
+                className="block text-sm font-medium text-secondary mb-1"
               >
                 Project ID{" "}
                 <span className="text-secondary font-normal">(optional)</span>
@@ -426,7 +426,7 @@ export default function SettingsPage() {
                 onChange={(e) =>
                   updateSetting("todoistProjectId", e.target.value)
                 }
-                className="input-fun w-full"
+                className="input-field w-full"
                 placeholder="Leave blank for Inbox"
               />
               <p className="text-xs text-secondary mt-1">

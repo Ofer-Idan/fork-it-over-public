@@ -8,24 +8,36 @@
   /* Light Mode Colors */
   --color-background: #FAFAFA;
   --color-surface: #FFFFFF;
+  --color-elevated: #F5F5F5;
+  --color-input-bg: #FFFFFF;
   --color-text-primary: #1A1A1A;
   --color-text-secondary: #6B6B6B;
+  --color-text-tertiary: #9A9A9A;
   --color-accent: #E85D35;
   --color-accent-hover: #D14D28;
+  --color-accent-pressed: #C04020;
   --color-border: #E0E0E0;
+  --color-border-subtle: #EBEBEB;
+  --color-border-focus: #E85D35;
   --color-success: #2D7A3E;
   --color-error: #DC2626;
   --color-link: #E85D35;
 }
 
 [data-theme="dark"] {
-  --color-background: #121212;
-  --color-surface: #1E1E1E;
+  --color-background: #0f0f0f;
+  --color-surface: #1a1a1a;
+  --color-elevated: #252525;
+  --color-input-bg: #161616;
   --color-text-primary: #F5F5F5;
   --color-text-secondary: #A0A0A0;
+  --color-text-tertiary: #707070;
   --color-accent: #FF7B52;
-  --color-accent-hover: #FF8C68;
-  --color-border: #333333;
+  --color-accent-hover: #FF9173;
+  --color-accent-pressed: #FF6B45;
+  --color-border: #3a3a3a;
+  --color-border-subtle: #2a2a2a;
+  --color-border-focus: #FF7B52;
   --color-success: #4CAF50;
   --color-error: #F87171;
   --color-link: #FF7B52;
@@ -33,13 +45,19 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-background: #121212;
-    --color-surface: #1E1E1E;
+    --color-background: #0f0f0f;
+    --color-surface: #1a1a1a;
+    --color-elevated: #252525;
+    --color-input-bg: #161616;
     --color-text-primary: #F5F5F5;
     --color-text-secondary: #A0A0A0;
+    --color-text-tertiary: #707070;
     --color-accent: #FF7B52;
-    --color-accent-hover: #FF8C68;
-    --color-border: #333333;
+    --color-accent-hover: #FF9173;
+    --color-accent-pressed: #FF6B45;
+    --color-border: #3a3a3a;
+    --color-border-subtle: #2a2a2a;
+    --color-border-focus: #FF7B52;
     --color-success: #4CAF50;
     --color-error: #F87171;
     --color-link: #FF7B52;
@@ -50,11 +68,17 @@
    Base Styles
    ============================================ */
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   background-color: var(--color-background);
   color: var(--color-text-primary);
   min-height: 100vh;
+  line-height: 1.6;
+  font-size: 16px;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -83,16 +107,32 @@ body {
   to { transform: rotate(360deg); }
 }
 
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
 .animate-fade-in {
-  animation: fade-in 0.15s ease-out;
+  animation: fade-in 0.2s ease-out;
 }
 
 .animate-slide-up {
-  animation: slide-up 0.15s ease-out;
+  animation: slide-up 0.2s ease-out;
 }
 
 .animate-spin {
   animation: spin 1s linear infinite;
+}
+
+.loading-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface) 0%,
+    var(--color-elevated) 50%,
+    var(--color-surface) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
 }
 
 /* Standard transition for interactive elements */
@@ -110,45 +150,52 @@ body {
   font-weight: 600;
   border-radius: 8px;
   padding: 12px 24px;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1rem;
+  transition: all 0.2s ease;
   border: none;
   cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .btn-primary:hover {
   background-color: var(--color-accent-hover);
-  transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:active {
-  transform: scale(1);
+  background-color: var(--color-accent-pressed);
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
 }
 
 .btn-secondary {
-  background-color: var(--color-surface);
+  background-color: var(--color-elevated);
   color: var(--color-text-primary);
   font-weight: 500;
   border-radius: 8px;
   padding: 12px 24px;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1rem;
+  transition: all 0.2s ease;
   border: 1px solid var(--color-border);
   cursor: pointer;
 }
 
 .btn-secondary:hover {
   background-color: var(--color-border);
-  transform: scale(1.02);
+  border-color: var(--color-border-focus);
+  transform: translateY(-1px);
 }
 
 .btn-secondary:active {
-  transform: scale(1);
+  transform: translateY(0);
 }
 
 /* ============================================
@@ -157,46 +204,54 @@ body {
 
 .input-field {
   height: 48px;
-  border: 2px solid var(--color-border);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 0 16px;
   font-size: 16px;
-  background-color: var(--color-surface);
+  background-color: var(--color-input-bg);
   color: var(--color-text-primary);
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   width: 100%;
+}
+
+.input-field:hover {
+  border-color: var(--color-border-focus);
 }
 
 .input-field:focus {
   outline: none;
-  border-color: var(--color-accent);
+  border-color: var(--color-border-focus);
   box-shadow: 0 0 0 3px rgba(232, 93, 53, 0.1);
 }
 
 .input-field::placeholder {
-  color: var(--color-text-secondary);
+  color: var(--color-text-tertiary);
 }
 
 /* Legacy class for compatibility */
 .input-fun {
   height: 48px;
-  border: 2px solid var(--color-border);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 0 16px;
   font-size: 16px;
-  background-color: var(--color-surface);
+  background-color: var(--color-input-bg);
   color: var(--color-text-primary);
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
+}
+
+.input-fun:hover {
+  border-color: var(--color-border-focus);
 }
 
 .input-fun:focus {
   outline: none;
-  border-color: var(--color-accent);
+  border-color: var(--color-border-focus);
   box-shadow: 0 0 0 3px rgba(232, 93, 53, 0.1);
 }
 
 .input-fun::placeholder {
-  color: var(--color-text-secondary);
+  color: var(--color-text-tertiary);
 }
 
 /* ============================================
@@ -206,9 +261,9 @@ body {
 .recipe-card {
   background-color: var(--color-surface);
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
   overflow: hidden;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-subtle);
 }
 
 /* ============================================
@@ -222,15 +277,15 @@ body {
   border: 2px solid var(--color-border);
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   position: relative;
   flex-shrink: 0;
-  background-color: var(--color-surface);
+  background-color: var(--color-input-bg);
 }
 
 .ingredient-check:checked {
-  background-color: var(--color-success);
-  border-color: var(--color-success);
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 .ingredient-check:checked::after {
@@ -270,7 +325,7 @@ body {
 }
 
 /* ============================================
-   Dark Mode Toggle
+   Dark Mode Toggle / Icon Buttons
    ============================================ */
 
 .theme-toggle {
@@ -280,11 +335,11 @@ body {
   padding: 8px;
   border-radius: 8px;
   color: var(--color-text-secondary);
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
 }
 
 .theme-toggle:hover {
-  background-color: var(--color-border);
+  background-color: var(--color-elevated);
   color: var(--color-text-primary);
 }
 
@@ -309,12 +364,20 @@ body {
   color: var(--color-accent);
 }
 
+.text-error {
+  color: var(--color-error);
+}
+
 .bg-surface {
   background-color: var(--color-surface);
 }
 
 .bg-background {
   background-color: var(--color-background);
+}
+
+.bg-elevated {
+  background-color: var(--color-elevated);
 }
 
 .border-default {
@@ -332,4 +395,65 @@ body {
   border-top-color: var(--color-accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
+}
+
+/* ============================================
+   Pantry Item Row — hover-reveal actions
+   ============================================ */
+
+.pantry-item-row {
+  transition: background-color 0.2s ease;
+}
+
+.pantry-item-row:hover {
+  background-color: var(--color-elevated);
+}
+
+.pantry-item-row .item-actions {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.pantry-item-row:hover .item-actions {
+  opacity: 1;
+}
+
+/* Always show on touch devices */
+@media (hover: none) {
+  .pantry-item-row .item-actions {
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   Notes Section — coral accent border
+   ============================================ */
+
+.notes-accent {
+  border-left: 4px solid var(--color-accent);
+  background-color: color-mix(in srgb, var(--color-accent) 5%, var(--color-background));
+}
+
+/* ============================================
+   Link hover underline effect
+   ============================================ */
+
+.link-underline {
+  position: relative;
+  text-decoration: none;
+}
+
+.link-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background-color: var(--color-accent);
+  transition: width 0.3s ease;
+}
+
+.link-underline:hover::after {
+  width: 100%;
 }

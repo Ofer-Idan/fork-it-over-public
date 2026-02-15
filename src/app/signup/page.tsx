@@ -80,72 +80,74 @@ export default function SignupPage() {
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <span className="text-accent"><ForkIcon /></span>
-            <h1 className="text-3xl font-bold text-primary">
-              Fork It Over
-            </h1>
-          </div>
-          <p className="text-secondary">Create your account</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="input-fun w-full"
-            required
-            autoFocus
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            className="input-fun w-full"
-            required
-            minLength={6}
-          />
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm password"
-            className="input-fun w-full"
-            required
-          />
-
-          {error && (
-            <div className="toast-error animate-fade-in text-center">
-              {error}
+        <div className="bg-surface border border-default rounded-xl p-8 shadow-lg">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <span className="text-accent"><ForkIcon /></span>
+              <h1 className="text-3xl font-bold text-primary tracking-tight">
+                Fork It Over
+              </h1>
             </div>
-          )}
+            <p className="text-secondary text-sm">Create your account</p>
+          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary w-full text-lg"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="loading-spinner" />
-                Creating account...
-              </span>
-            ) : (
-              "Sign Up"
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              className="input-field w-full"
+              required
+              autoFocus
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="input-field w-full"
+              required
+              minLength={6}
+            />
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm password"
+              className="input-field w-full"
+              required
+            />
+
+            {error && (
+              <div className="toast-error animate-fade-in text-center">
+                {error}
+              </div>
             )}
-          </button>
-        </form>
 
-        <p className="text-center text-secondary text-sm mt-6">
-          Already have an account?{" "}
-          <Link href="/login" className="text-accent hover:underline">
-            Sign in
-          </Link>
-        </p>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary w-full text-lg"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="loading-spinner" />
+                  Creating account...
+                </span>
+              ) : (
+                "Sign Up"
+              )}
+            </button>
+          </form>
+
+          <p className="text-center text-secondary text-sm mt-6">
+            Already have an account?{" "}
+            <Link href="/login" className="text-accent hover:underline">
+              Sign in
+            </Link>
+          </p>
+        </div>
       </div>
     </main>
   );

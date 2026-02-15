@@ -65,55 +65,57 @@ export default function ForgotPasswordPage() {
   return (
     <main className="min-h-screen flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <span className="text-accent"><ForkIcon /></span>
-            <h1 className="text-3xl font-bold text-primary">
-              Fork It Over
-            </h1>
-          </div>
-          <p className="text-secondary">Reset your password</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="input-fun w-full"
-            required
-            autoFocus
-          />
-
-          {error && (
-            <div className="toast-error animate-fade-in text-center">
-              {error}
+        <div className="bg-surface border border-default rounded-xl p-8 shadow-lg">
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <span className="text-accent"><ForkIcon /></span>
+              <h1 className="text-3xl font-bold text-primary tracking-tight">
+                Fork It Over
+              </h1>
             </div>
-          )}
+            <p className="text-secondary text-sm">Reset your password</p>
+          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary w-full text-lg"
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="loading-spinner" />
-                Sending...
-              </span>
-            ) : (
-              "Send Reset Link"
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              className="input-field w-full"
+              required
+              autoFocus
+            />
+
+            {error && (
+              <div className="toast-error animate-fade-in text-center">
+                {error}
+              </div>
             )}
-          </button>
-        </form>
 
-        <p className="text-center text-secondary text-sm mt-6">
-          Remember your password?{" "}
-          <Link href="/login" className="text-accent hover:underline">
-            Sign in
-          </Link>
-        </p>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary w-full text-lg"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="loading-spinner" />
+                  Sending...
+                </span>
+              ) : (
+                "Send Reset Link"
+              )}
+            </button>
+          </form>
+
+          <p className="text-center text-secondary text-sm mt-6">
+            Remember your password?{" "}
+            <Link href="/login" className="text-accent hover:underline">
+              Sign in
+            </Link>
+          </p>
+        </div>
       </div>
     </main>
   );

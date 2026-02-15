@@ -614,7 +614,7 @@ export default function PantryPage() {
   const renderItemRow = (item: PantryItem) => {
     const out = isItemOut(item);
     return (
-      <div key={item.id} className={`flex items-center gap-3 px-4 py-3 ${out ? "opacity-60" : ""}`}>
+      <div key={item.id} className={`pantry-item-row flex items-center gap-3 px-4 py-3 rounded-lg ${out ? "opacity-60" : ""}`}>
         <div className="flex-1 min-w-0">
           <span className="text-primary font-medium">{item.name}</span>
           {item.brand && <span className="text-secondary text-xs ml-2">({item.brand})</span>}
@@ -647,33 +647,35 @@ export default function PantryPage() {
           renderQuantityControl(item)
         )}
 
-        <button
-          onClick={() => setEditItem({
-            id: item.id,
-            name: item.name,
-            brand: item.brand || "",
-            category: item.category,
-            storageLocation: item.storageLocation,
-            quantityType: item.quantityType,
-            quantity: item.quantity,
-            unit: item.unit || "",
-            restockThreshold: item.restockThreshold,
-            bulkQuantity: item.bulkQuantity || "full",
-            binaryQuantity: item.binaryQuantity || "have",
-            notes: item.notes || "",
-          })}
-          className="text-secondary hover:text-accent transition-colors p-1"
-          aria-label="Edit item"
-        >
-          <PencilIcon />
-        </button>
-        <button
-          onClick={() => handleDelete(item.id)}
-          className="text-secondary hover:text-error transition-colors p-1"
-          aria-label="Delete item"
-        >
-          <TrashIcon />
-        </button>
+        <div className="item-actions flex gap-1">
+          <button
+            onClick={() => setEditItem({
+              id: item.id,
+              name: item.name,
+              brand: item.brand || "",
+              category: item.category,
+              storageLocation: item.storageLocation,
+              quantityType: item.quantityType,
+              quantity: item.quantity,
+              unit: item.unit || "",
+              restockThreshold: item.restockThreshold,
+              bulkQuantity: item.bulkQuantity || "full",
+              binaryQuantity: item.binaryQuantity || "have",
+              notes: item.notes || "",
+            })}
+            className="text-secondary hover:text-accent transition-colors p-1"
+            aria-label="Edit item"
+          >
+            <PencilIcon />
+          </button>
+          <button
+            onClick={() => handleDelete(item.id)}
+            className="text-secondary hover:text-error transition-colors p-1"
+            aria-label="Delete item"
+          >
+            <TrashIcon />
+          </button>
+        </div>
       </div>
     );
   };
@@ -1387,7 +1389,7 @@ export default function PantryPage() {
 
       {/* Main Content */}
       {!loading && filtered.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* Spice Rack tab gets special grid view */}
           {isSpiceRackTab ? (
             <div className="bg-surface border border-default rounded-xl p-4">

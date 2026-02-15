@@ -562,7 +562,7 @@ function HomeContent() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Paste a recipe URL..."
-            className="input-fun flex-1"
+            className="input-field flex-1"
             required
           />
           <button
@@ -860,8 +860,8 @@ function HomeContent() {
                 </h3>
                 <ol className="space-y-6">
                   {recipe.instructions.map((step, i) => (
-                    <li key={i} className="flex gap-4 bg-background p-4 rounded-lg">
-                      <span className="flex-shrink-0 w-8 h-8 bg-[var(--color-accent)] text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                    <li key={i} className="flex gap-4 bg-background p-4 rounded-lg transition-colors hover:bg-elevated">
+                      <span className="flex-shrink-0 w-8 h-8 bg-[var(--color-accent)] text-white rounded-full flex items-center justify-center text-sm font-bold">
                         {i + 1}
                       </span>
                       <p className="text-secondary leading-loose pt-0.5">{step}</p>
@@ -873,8 +873,8 @@ function HomeContent() {
 
             {/* Notes */}
             {recipe.notes && recipe.notes.length > 0 && (
-              <div className="mt-8 p-4 bg-background rounded-lg border border-default">
-                <h3 className="text-lg font-semibold text-primary mb-3">
+              <div className="mt-8 p-4 notes-accent rounded-lg">
+                <h3 className="text-sm font-semibold text-accent uppercase tracking-wide mb-3">
                   Notes
                 </h3>
                 <ul className="space-y-2">
