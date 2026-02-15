@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import type { Recipe, ShoppingApp } from "@/lib/types";
+import type { Recipe, ShoppingApp, DeductionMatch, ConfirmedDeduction, PantryItem } from "@/lib/types";
 import { formatIngredient } from "@/lib/parser/ingredients";
+import { matchIngredientToPantry, type PantryMatchStatus } from "@/lib/pantry/matching";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -60,6 +61,19 @@ const ArrowRightIcon = () => (
   </svg>
 );
 
+const PantryIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0" />
+  </svg>
+);
+
+const CookIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z" />
+  </svg>
+);
+
 const ArchiveIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
     <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
@@ -108,6 +122,19 @@ function HomeContent() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [loggingOut, setLoggingOut] = useState(false);
   const [multiplier, setMultiplier] = useState(1);
+  const [showCookModal, setShowCookModal] = useState(false);
+  const [cookMatches, setCookMatches] = useState<DeductionMatch[]>([]);
+  const [cookLoading, setCookLoading] = useState(false);
+  const [cookSuccess, setCookSuccess] = useState<string | null>(null);
+  const [cookSelectedIds, setCookSelectedIds] = useState<Set<number>>(new Set());
+  const [cookLowStock, setCookLowStock] = useState<{ id: string; name: string; category?: string; quantityType?: string; bulkQuantity?: string; quantity?: number; unit?: string; binaryQuantity?: string }[]>([]);
+  const [cookOutItems, setCookOutItems] = useState<{ id: string; name: string }[]>([]);
+  const [cookOutSelected, setCookOutSelected] = useState<Set<string>>(new Set());
+  const [cookShoppingSending, setCookShoppingSending] = useState<ShoppingApp | null>(null);
+  const [cookShoppingSuccess, setCookShoppingSuccess] = useState<string | null>(null);
+  const [unmatchedIngredients, setUnmatchedIngredients] = useState<{ original: string; selected: boolean }[]>([]);
+  const [addingUnmatched, setAddingUnmatched] = useState(false);
+  const [pantryItems, setPantryItems] = useState<PantryItem[]>([]);
   const router = useRouter();
 
   const MULTIPLIER_OPTIONS = [0.5, 1, 2, 3] as const;
@@ -192,6 +219,17 @@ function HomeContent() {
         new Set(data.recipe.ingredients.map((_: unknown, i: number) => i))
       );
       saveToHistory(data.recipe);
+
+      // Fetch pantry items for ingredient matching
+      try {
+        const pantryRes = await fetch("/api/pantry");
+        if (pantryRes.ok) {
+          const pantryData = await pantryRes.json();
+          setPantryItems(pantryData.items || []);
+        }
+      } catch {
+        // Pantry fetch failure is non-critical
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -243,6 +281,20 @@ function HomeContent() {
     setSelectedIngredients(new Set());
   };
 
+  const selectMissingOnly = () => {
+    if (!recipe) return;
+    const missing = new Set<number>();
+    recipe.ingredients.forEach((ing, i) => {
+      const pantryMatch = pantryItems.length > 0 && ing.name
+        ? matchIngredientToPantry(ing.name, pantryItems)
+        : null;
+      if (!pantryMatch || pantryMatch.status === "out" || pantryMatch.status === "low" || !pantryMatch.status) {
+        missing.add(i);
+      }
+    });
+    setSelectedIngredients(missing);
+  };
+
   const handleSend = async (app: ShoppingApp) => {
     if (!recipe) return;
 
@@ -279,6 +331,154 @@ function HomeContent() {
     }
   };
 
+  const handleCookThis = async () => {
+    if (!recipe) return;
+    setShowCookModal(true);
+    setCookLoading(true);
+    setCookSuccess(null);
+    setCookMatches([]);
+    setCookLowStock([]);
+    setCookOutItems([]);
+    setCookOutSelected(new Set());
+    setCookShoppingSuccess(null);
+    setUnmatchedIngredients([]);
+
+    try {
+      const res = await fetch("/api/pantry/deduct", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ingredients: recipe.ingredients, multiplier }),
+      });
+      const data = await res.json();
+      if (res.ok && data.matches) {
+        setCookMatches(data.matches);
+        // Pre-select all matched items
+        const selected = new Set<number>();
+        data.matches.forEach((m: DeductionMatch, i: number) => {
+          if (m.action !== "no_match") selected.add(i);
+        });
+        setCookSelectedIds(selected);
+        // Collect unmatched ingredients for CTA
+        const unmatched = data.matches
+          .filter((m: DeductionMatch) => m.action === "no_match" && !m.pantryItemId)
+          .map((m: DeductionMatch) => ({ original: m.recipeIngredient, selected: false }));
+        setUnmatchedIngredients(unmatched);
+      } else {
+        setError(data.error || "Failed to match ingredients");
+        setShowCookModal(false);
+      }
+    } catch {
+      setError("Failed to match ingredients");
+      setShowCookModal(false);
+    } finally {
+      setCookLoading(false);
+    }
+  };
+
+  const handleCookConfirm = async () => {
+    const deductions: ConfirmedDeduction[] = cookMatches
+      .filter((_, i) => cookSelectedIds.has(i))
+      .filter(m => m.action !== "no_match" && m.pantryItemId)
+      .map(m => ({
+        pantryItemId: m.pantryItemId as string,
+        action: m.action as "deduct" | "reduce_bulk" | "set_binary_out",
+        deductQuantity: m.deductQuantity,
+        newBulkQuantity: m.newBulkQuantity,
+      }));
+
+    if (deductions.length === 0) {
+      setShowCookModal(false);
+      return;
+    }
+
+    setCookLoading(true);
+    try {
+      // Add selected unmatched ingredients to pantry as "out"
+      const unmatchedToAdd = unmatchedIngredients.filter(u => u.selected);
+      if (unmatchedToAdd.length > 0) {
+        await fetch("/api/pantry", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: unmatchedToAdd.map(u => ({
+              name: u.original,
+              canonicalName: u.original.toLowerCase().replace(/[^a-z0-9\s]/g, "").replace(/\s+/g, "_"),
+              category: "other" as const,
+              quantityType: "binary" as const,
+              binaryQuantity: "out" as const,
+            })),
+          }),
+        });
+      }
+
+      const res = await fetch("/api/pantry/deduct/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deductions }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCookLowStock(data.lowStockItems || []);
+        // Extract items that are now "out"
+        const outItems = (data.lowStockItems || []).filter((item: { quantityType?: string; bulkQuantity?: string; binaryQuantity?: string; quantity?: number }) => {
+          if (item.quantityType === "bulk") return item.bulkQuantity === "out";
+          if (item.quantityType === "binary") return item.binaryQuantity === "out";
+          if (item.quantityType === "countable") return (item.quantity ?? 0) === 0;
+          return false;
+        });
+        setCookOutItems(outItems);
+        setCookOutSelected(new Set(outItems.map((item: { id: string }) => item.id)));
+        setCookSuccess(`Pantry updated! ${deductions.length} item${deductions.length !== 1 ? "s" : ""} deducted.`);
+        setCookMatches([]);
+
+        // Refresh pantry state so indicators update
+        try {
+          const pantryRes = await fetch("/api/pantry");
+          if (pantryRes.ok) {
+            const pantryData = await pantryRes.json();
+            setPantryItems(pantryData.items || []);
+          }
+        } catch {
+          // Non-critical
+        }
+      } else {
+        setError(data.error || "Failed to apply deductions");
+        setShowCookModal(false);
+      }
+    } catch {
+      setError("Failed to apply deductions");
+      setShowCookModal(false);
+    } finally {
+      setCookLoading(false);
+    }
+  };
+
+  const handleCookShoppingSend = async (app: ShoppingApp) => {
+    const items = cookOutItems.filter(item => cookOutSelected.has(item.id));
+    if (items.length === 0) return;
+    setCookShoppingSending(app);
+    try {
+      const res = await fetch("/api/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ingredients: items.map(item => item.name),
+          app,
+        }),
+      });
+      if (res.ok) {
+        setCookShoppingSuccess(`${items.length} item${items.length !== 1 ? "s" : ""} sent to ${app === "bring" ? "Bring!" : "Todoist"}`);
+      } else {
+        const data = await res.json();
+        setError(data.error || `Failed to send to ${app}`);
+      }
+    } catch {
+      setError(`Failed to send to ${app}`);
+    } finally {
+      setCookShoppingSending(null);
+    }
+  };
+
   const clearHistory = () => {
     setSavedRecipes([]);
     try {
@@ -303,6 +503,13 @@ function HomeContent() {
     <main className="max-w-6xl mx-auto p-6 pb-20">
       {/* Top Bar */}
       <div className="flex justify-end gap-2 mb-4">
+        <Link
+          href="/pantry"
+          className="theme-toggle"
+          aria-label="My pantry"
+        >
+          <PantryIcon />
+        </Link>
         <Link
           href="/archive"
           className="theme-toggle"
@@ -542,6 +749,17 @@ function HomeContent() {
                     >
                       None
                     </button>
+                    {pantryItems.length > 0 && (
+                      <>
+                        <span className="text-secondary">|</span>
+                        <button
+                          onClick={selectMissingOnly}
+                          className="text-accent hover:text-accent-hover transition-colors"
+                        >
+                          Missing
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
                 <ul className="space-y-2">
@@ -549,6 +767,15 @@ function HomeContent() {
                     const showGroupHeader =
                       ing.group &&
                       (i === 0 || recipe.ingredients[i - 1].group !== ing.group);
+                    const pantryMatch = pantryItems.length > 0 && ing.name
+                      ? matchIngredientToPantry(ing.name, pantryItems)
+                      : null;
+                    const statusIcon: Record<PantryMatchStatus & string, { icon: string; color: string; title: string }> = {
+                      stocked: { icon: "\u2713", color: "text-[var(--color-success)]", title: "In pantry" },
+                      low: { icon: "\u26A0", color: "text-yellow-500", title: "Low stock" },
+                      out: { icon: "\u2717", color: "text-[var(--color-error)]", title: "Out of stock" },
+                    };
+                    const indicator = pantryMatch?.status ? statusIcon[pantryMatch.status] : null;
                     return (
                       <li key={i}>
                         {showGroupHeader && (
@@ -571,7 +798,7 @@ function HomeContent() {
                             className="ingredient-check mt-0.5"
                           />
                           <span
-                            className={`transition-colors ${
+                            className={`flex-1 transition-colors ${
                               selectedIngredients.has(i)
                                 ? "text-primary"
                                 : "text-secondary line-through"
@@ -579,6 +806,16 @@ function HomeContent() {
                           >
                             {formatIngredient(ing, multiplier)}
                           </span>
+                          {indicator && (
+                            <span className={`flex-shrink-0 text-xs font-medium flex items-center gap-1 ${indicator.color}`} title={indicator.title}>
+                              <span className="font-bold">{indicator.icon}</span>
+                              <span className="hidden sm:inline">
+                                {pantryMatch?.status === "stocked" && "(In pantry)"}
+                                {pantryMatch?.status === "low" && "(Running low)"}
+                                {pantryMatch?.status === "out" && "(Out)"}
+                              </span>
+                            </span>
+                          )}
                         </div>
                       </li>
                     );
@@ -670,11 +907,220 @@ function HomeContent() {
                 >
                   <PinterestIcon /> Pin it
                 </a>
+                <button
+                  onClick={handleCookThis}
+                  className="text-sm text-secondary hover:text-accent transition-colors flex items-center gap-2"
+                >
+                  <CookIcon /> I Cooked This
+                </button>
               </div>
               <span className="text-sm text-secondary">
                 Fork It Over
               </span>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cook Modal */}
+      {showCookModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => { setShowCookModal(false); setCookSuccess(null); }}>
+          <div className="bg-surface rounded-xl p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto animate-slide-up" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-primary text-lg">I Cooked This</h3>
+              <button
+                onClick={() => { setShowCookModal(false); setCookSuccess(null); }}
+                className="text-secondary hover:text-primary"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {cookLoading && !cookSuccess && (
+              <div className="text-center py-12">
+                <div className="loading-spinner w-10 h-10 mx-auto mb-4" />
+                <p className="text-secondary">Matching ingredients to your pantry...</p>
+              </div>
+            )}
+
+            {!cookLoading && cookMatches.length > 0 && !cookSuccess && (
+              <div className="space-y-3">
+                <p className="text-secondary text-sm">Review the deductions below and confirm.</p>
+                <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+                  {cookMatches.filter(m => m.action !== "no_match").map((match, i) => {
+                    const origIdx = cookMatches.indexOf(match);
+                    return (
+                      <div
+                        key={origIdx}
+                        className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                          cookSelectedIds.has(origIdx) ? "bg-background" : "opacity-60"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={cookSelectedIds.has(origIdx)}
+                          onChange={() => {
+                            const next = new Set(cookSelectedIds);
+                            if (next.has(origIdx)) next.delete(origIdx);
+                            else next.add(origIdx);
+                            setCookSelectedIds(next);
+                          }}
+                          className="ingredient-check"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-primary text-sm font-medium">{match.recipeIngredient}</p>
+                          {match.action === "deduct" && match.pantryItemName && (
+                            <p className="text-secondary text-xs">
+                              {match.pantryItemName}: deduct {match.deductQuantity}
+                            </p>
+                          )}
+                          {match.action === "reduce_bulk" && match.pantryItemName && (
+                            <p className="text-secondary text-xs">
+                              {match.pantryItemName}: &rarr; {match.newBulkQuantity}
+                            </p>
+                          )}
+                          {match.action === "set_binary_out" && match.pantryItemName && (
+                            <p className="text-secondary text-xs">
+                              {match.pantryItemName}: &rarr; out
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {/* Unmatched ingredients CTA */}
+                  {unmatchedIngredients.length > 0 && (
+                    <div className="border-t border-default pt-3 mt-3">
+                      <p className="text-sm font-semibold text-secondary mb-2">Not in your pantry — add them?</p>
+                      {unmatchedIngredients.map((u, i) => (
+                        <div key={i} className="flex items-center gap-3 p-2 rounded-lg">
+                          <input
+                            type="checkbox"
+                            checked={u.selected}
+                            onChange={() => {
+                              const updated = [...unmatchedIngredients];
+                              updated[i] = { ...updated[i], selected: !updated[i].selected };
+                              setUnmatchedIngredients(updated);
+                            }}
+                            className="ingredient-check"
+                          />
+                          <span className="text-sm text-secondary">{u.original}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2 justify-end pt-2">
+                  <button onClick={() => setShowCookModal(false)} className="px-4 py-2 text-sm text-secondary">Cancel</button>
+                  <button
+                    onClick={handleCookConfirm}
+                    disabled={cookSelectedIds.size === 0 && unmatchedIngredients.filter(u => u.selected).length === 0}
+                    className="btn-primary text-sm disabled:opacity-50"
+                  >
+                    Update Pantry
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {cookSuccess && (
+              <div className="space-y-4">
+                <div className="toast-success">{cookSuccess}</div>
+
+                {/* Shopping list prompt for out-of-stock items */}
+                {cookOutItems.length > 0 && !cookShoppingSuccess && (
+                  <div className="bg-background rounded-lg p-4">
+                    <p className="text-sm font-semibold text-primary mb-2">Out of stock — add to shopping list?</p>
+                    <div className="space-y-1 mb-3">
+                      {cookOutItems.map(item => (
+                        <label key={item.id} className="flex items-center gap-2 text-sm text-secondary cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={cookOutSelected.has(item.id)}
+                            onChange={() => {
+                              const next = new Set(cookOutSelected);
+                              if (next.has(item.id)) next.delete(item.id);
+                              else next.add(item.id);
+                              setCookOutSelected(next);
+                            }}
+                            className="ingredient-check"
+                          />
+                          {item.name}
+                        </label>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleCookShoppingSend("bring")}
+                        disabled={cookShoppingSending !== null || cookOutSelected.size === 0}
+                        className="flex-1 py-2 bg-[var(--color-success)] text-white text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-all"
+                      >
+                        {cookShoppingSending === "bring" ? (
+                          <span className="flex items-center justify-center gap-2"><span className="loading-spinner w-3 h-3" /> Sending...</span>
+                        ) : "Add to Bring!"}
+                      </button>
+                      <button
+                        onClick={() => handleCookShoppingSend("todoist")}
+                        disabled={cookShoppingSending !== null || cookOutSelected.size === 0}
+                        className="flex-1 py-2 bg-[#E44332] text-white text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 transition-all"
+                      >
+                        {cookShoppingSending === "todoist" ? (
+                          <span className="flex items-center justify-center gap-2"><span className="loading-spinner w-3 h-3" /> Sending...</span>
+                        ) : "Add to Todoist"}
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => setCookOutItems([])}
+                      className="text-xs text-secondary hover:text-primary mt-2 transition-colors"
+                    >
+                      Not now
+                    </button>
+                  </div>
+                )}
+
+                {cookShoppingSuccess && (
+                  <div className="toast-success text-sm">{cookShoppingSuccess}</div>
+                )}
+
+                {/* Remaining low stock items (not out) */}
+                {cookLowStock.filter(item => {
+                  if (item.quantityType === "bulk") return item.bulkQuantity !== "out";
+                  if (item.quantityType === "binary") return item.binaryQuantity !== "out";
+                  if (item.quantityType === "countable") return (item.quantity ?? 0) > 0;
+                  return true;
+                }).length > 0 && (
+                  <div className="bg-background rounded-lg p-4">
+                    <p className="text-sm font-semibold text-primary mb-2">Running low:</p>
+                    <ul className="space-y-1">
+                      {cookLowStock.filter(item => {
+                        if (item.quantityType === "bulk") return item.bulkQuantity !== "out";
+                        if (item.quantityType === "binary") return item.binaryQuantity !== "out";
+                        if (item.quantityType === "countable") return (item.quantity ?? 0) > 0;
+                        return true;
+                      }).map((item, i) => (
+                        <li key={i} className="text-sm text-secondary flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-orange-500" />
+                          {item.name}
+                          {item.bulkQuantity && ` (${item.bulkQuantity})`}
+                          {item.quantity != null && ` (${item.quantity}${item.unit ? ` ${item.unit}` : ""})`}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => { setShowCookModal(false); setCookSuccess(null); setCookShoppingSuccess(null); }}
+                    className="btn-primary text-sm"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -724,6 +1170,10 @@ function HomeContent() {
             <div>
               <h3 className="font-semibold text-primary mb-3">Top bar icons</h3>
               <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="theme-toggle pointer-events-none"><PantryIcon /></span>
+                  <span className="text-secondary"><strong className="text-primary">Pantry</strong> -- track what you have on hand</span>
+                </div>
                 <div className="flex items-center gap-3 text-sm">
                   <span className="theme-toggle pointer-events-none"><ArchiveIcon /></span>
                   <span className="text-secondary"><strong className="text-primary">Archive</strong> -- browse all your saved recipes</span>
