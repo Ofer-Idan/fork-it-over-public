@@ -60,6 +60,7 @@ export default function SettingsPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [userEmail, setUserEmail] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordSaving, setPasswordSaving] = useState(false);
@@ -135,12 +136,25 @@ export default function SettingsPage() {
 
     setPasswordSaving(true);
     const supabase = createClient();
+
+    // Verify current password by re-authenticating
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: userEmail,
+      password: currentPassword,
+    });
+    if (signInError) {
+      setPasswordError("Current password is incorrect");
+      setPasswordSaving(false);
+      return;
+    }
+
     const { error } = await supabase.auth.updateUser({ password: newPassword });
 
     if (error) {
       setPasswordError(error.message);
     } else {
       setPasswordSuccess(true);
+      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       setTimeout(() => setPasswordSuccess(false), 3000);
@@ -205,6 +219,23 @@ export default function SettingsPage() {
           </div>
 
           <form onSubmit={handlePasswordUpdate} className="space-y-4">
+            <div>
+              <label
+                htmlFor="currentPassword"
+                className="block text-sm font-medium text-primary mb-1"
+              >
+                Current Password
+              </label>
+              <input
+                type="password"
+                id="currentPassword"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className="input-fun w-full"
+                placeholder="Current password"
+                required
+              />
+            </div>
             <div>
               <label
                 htmlFor="newPassword"
